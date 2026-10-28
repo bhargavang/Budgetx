@@ -1,0 +1,32 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    # "native" serves the YAML files bundled under configs/.
+    # Switch to the git backend by activating the "git" profile and setting CONFIG_GIT_URI.
+    active: ${CONFIG_PROFILE:native}
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: ${CONFIG_NATIVE_LOCATION:classpath:/configs}
+        git:
+          uri: ${CONFIG_GIT_URI:}
+          default-label: main
+          clone-on-start: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
