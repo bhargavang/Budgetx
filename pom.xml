@@ -23,9 +23,9 @@
         <module>config-server</module>
         <module>api-gateway</module>
         <module>user-service</module>
-        <!-- Enabled as each phase lands:
         <module>emi-service</module>
         <module>expense-service</module>
+        <!-- Enabled as each phase lands:
         <module>budget-service</module>
         <module>ai-agent-service</module>
         <module>market-data-service</module>
