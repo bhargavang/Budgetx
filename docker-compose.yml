@@ -106,5 +106,33 @@ services:
       <<: *service-env
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
 
+  emi-service:
+    build: ./emi-service
+    profiles: ["all"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    environment:
+      <<: *service-env
+
+  expense-service:
+    build: ./expense-service
+    profiles: ["all"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    environment:
+      <<: *service-env
+
 volumes:
   mysql_data:

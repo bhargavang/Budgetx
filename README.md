@@ -27,7 +27,9 @@ Each service owns its MySQL database. Inter-service calls use OpenFeign (sync) a
 | config-server | Done (native backend, `git` profile supported) |
 | api-gateway | Done (routes for all services, JWT filter, Redis rate limiting, CORS) |
 | user-service | Done (register, login, refresh, profile, internal Feign endpoints) |
-| emi, expense, budget, ai-agent, market-data, investment, notification | Next phases |
+| emi-service | Done (loan CRUD, EMI calculation, outstanding balance, monthly total) |
+| expense-service | Done (seeded categories, CRUD, monthly/yearly summaries, Kafka `budget.expense.logged`) |
+| budget, ai-agent, market-data, investment, notification | Next phases |
 
 Gateway routes for the later services are already defined, so each one works through the
 gateway as soon as it registers with Eureka.
@@ -119,6 +121,37 @@ access on the first MySQL start. Tables are created by JPA (`ddl-auto: update`).
 | GET | /api/users/{id}/salary | internal | Monthly salary (budget-service) |
 | GET | /api/users/{id}/profile | internal | Age, salary, risk profile (ai-agent-service) |
 
+## API (emi-service)
+
+Business services read the caller from the `X-User-Id` header that the gateway sets.
+
+| Method | Path | Description |
+|---|---|---|
+| POST | /api/emis | Add a loan. `emiAmount` is optional and computed from principal, rate and tenure if omitted |
+| GET | /api/emis?status=ACTIVE | List loans with instalments paid/remaining and outstanding principal |
+| GET | /api/emis/summary | Active loan count, this month's EMI total, total outstanding |
+| GET / PUT / DELETE | /api/emis/{id} | Read, replace, delete one loan |
+| PATCH | /api/emis/{id}/close | Mark a loan as closed (foreclosed or fully paid) |
+| GET | /api/emis/total?userId=&month=&year= | internal: EMI due in a month (budget-service) |
+
+## API (expense-service)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | /api/expense-categories | The 15 seeded categories, each flagged essential or discretionary |
+| POST | /api/expenses | Log an expense; publishes `budget.expense.logged` to Kafka after commit |
+| GET | /api/expenses?from=&to=&categoryId=&page=&size= | Paged list, defaults to the current month |
+| GET | /api/expenses/summary/month?month=&year= | Total, essential vs discretionary, and per-category breakdown |
+| GET | /api/expenses/summary/year?year= | Monthly totals for a year |
+| GET / PUT / DELETE | /api/expenses/{id} | Read, replace, delete one expense |
+| GET | /api/expenses/total?userId=&month=&year= | internal: total spent in a month (budget-service) |
+
+Kafka event on `budget.expense.logged` (key = userId):
+
+```json
+{"userId":1,"expenseId":1,"amount":3200,"category":"Groceries","expenseDate":"2026-10-20"}
+```
+
 Quick test through the gateway:
 
 ```bash
@@ -140,8 +173,9 @@ http://localhost:8080/swagger-ui.html at the gateway with a dropdown for every s
 mvn test
 ```
 
-user-service has JWT unit tests and a MockMvc integration test of the full auth flow on H2;
-api-gateway has unit tests for the JWT filter.
+33 tests across the modules: JWT and auth-flow tests in user-service, JWT filter tests in
+api-gateway, EMI maths and API tests in emi-service, and API, summary and Kafka-publish tests in
+expense-service. Integration tests run on H2, so no Docker is needed for `mvn test`.
 
 ## Disclaimer
 
