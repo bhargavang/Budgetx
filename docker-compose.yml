@@ -1,0 +1,110 @@
+# Infrastructure starts by default:   docker compose up -d
+# Everything (after mvn clean package): docker compose --profile all up -d --build
+# Secrets come from .env (see .env.example).
+
+x-service-env: &service-env
+  EUREKA_URL: http://eureka-server:8761/eureka/
+  CONFIG_SERVER_URL: http://config-server:8888
+  MYSQL_HOST: mysql
+  MYSQL_PORT: 3306
+  MYSQL_USERNAME: ${MYSQL_USERNAME:-budgetx}
+  MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+  REDIS_HOST: redis
+  KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  JWT_SECRET: ${JWT_SECRET:-}
+
+services:
+  # ---------- infrastructure ----------
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_USER: ${MYSQL_USERNAME:-budgetx}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./infrastructure/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Containers use kafka:29092; apps run from the host (mvn spring-boot:run) use localhost:9092.
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # ---------- platform ----------
+  eureka-server:
+    build: ./eureka-server
+    profiles: ["all"]
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_HOSTNAME: eureka-server
+
+  config-server:
+    build: ./config-server
+    profiles: ["all"]
+    depends_on:
+      - eureka-server
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+
+  api-gateway:
+    build: ./api-gateway
+    profiles: ["all"]
+    depends_on:
+      - eureka-server
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+
+  # ---------- business services (not published; reach them through the gateway) ----------
+  user-service:
+    build: ./user-service
+    profiles: ["all"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    environment:
+      <<: *service-env
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+
+volumes:
+  mysql_data:
