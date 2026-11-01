@@ -19,5 +19,8 @@ check "profile without token is 401"   "$(code "$BASE/api/users/me")" 401
 check "profile with token"             "$(code -H "Authorization: Bearer $TOKEN" "$BASE/api/users/me")" 200
 check "emi-service via gateway"        "$(code -H "Authorization: Bearer $TOKEN" "$BASE/api/emis")" 200
 check "expense-service via gateway"    "$(code -H "Authorization: Bearer $TOKEN" "$BASE/api/expenses")" 200
+check "budget-service via gateway"     "$(code -H "Authorization: Bearer $TOKEN" "$BASE/api/budgets/current")" 200
+check "guidance (rules or AI)"         "$(code -X POST -H "Authorization: Bearer $TOKEN" "$BASE/api/recommendations/generate")" 201
+grep -q '"disclaimer"' "$BODY" && echo "      mode: $(sed -n 's/.*"mode":"\([A-Z_]*\)".*/\1/p' "$BODY")"
 check "internal path blocked"          "$(code -H "Authorization: Bearer $TOKEN" "$BASE/api/emis/total")" 403
 echo; echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

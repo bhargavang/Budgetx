@@ -10,6 +10,7 @@ const FIELD_LABELS = {
   categoryId: 'Category', amount: 'Amount', expenseDate: 'Date', description: 'Description',
   loanName: 'Loan name', principalAmount: 'Loan amount', interestRate: 'Interest rate',
   tenureMonths: 'Tenure', emiAmount: 'EMI', startDate: 'Start date', newPassword: 'New password',
+  dateOfBirth: 'Date of birth', emergencySavings: 'Emergency savings', dependents: 'Dependents',
 };
 
 const app = document.getElementById('app');
@@ -121,7 +122,11 @@ async function api(path, method = 'GET', body) {
   }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(problemMessage(data, res.status));
+  if (!res.ok) {
+    const error = new Error(problemMessage(data, res.status));
+    error.status = res.status;
+    throw error;
+  }
   return data;
 }
 
@@ -212,6 +217,7 @@ const PAGES = {
   dashboard: { label: 'Dashboard', render: renderDashboard },
   expenses: { label: 'Expenses', render: renderExpenses },
   loans: { label: 'Loans', render: renderLoans },
+  guidance: { label: 'Guidance', render: renderGuidance },
   profile: { label: 'Profile', render: renderProfile },
 };
 
@@ -493,6 +499,128 @@ PAGES.loans.bind = view => {
   }));
 };
 
+// ---------- guidance ----------
+
+const SEVERITY_LABEL = { CRITICAL: 'Fix first', WARNING: 'Watch out', INFO: 'Note' };
+const ASSET_LABEL = { EQUITY: 'Equity', DEBT: 'Safe / debt', GOLD: 'Gold' };
+const yesNo = (name, value) => `<select name="${name}">${['false', 'true'].map(v =>
+  `<option value="${v}"${String(!!value) === v ? ' selected' : ''}>${v === 'true' ? 'Yes' : 'No'}</option>`).join('')}</select>`;
+
+async function latestGuidance() {
+  try {
+    return await api('/api/recommendations/latest');
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
+}
+
+function safetyForm(s) {
+  return `<form id="safety">
+    <label>Emergency savings you can withdraw within a day (₹)
+      <input name="emergencySavings" type="number" min="0" step="1" required inputmode="numeric" value="${esc(s.saved ? s.emergencySavings : '')}"></label>
+    <label>People who depend on your income <span class="hint">(spouse, children, parents)</span>
+      <input name="dependents" type="number" min="0" max="20" step="1" required inputmode="numeric" value="${esc(s.saved ? s.dependents : '')}"></label>
+    <div class="row">
+      <label>Term life insurance?${yesNo('hasTermInsurance', s.hasTermInsurance)}</label>
+      <label>Personal health insurance?${yesNo('hasHealthInsurance', s.hasHealthInsurance)}</label>
+    </div>
+    <p class="form-error"></p>
+    <div class="actions"><button type="submit" class="primary">Save and update guidance</button></div>
+  </form>`;
+}
+
+function allocationRow(a) {
+  return `<li class="alloc">
+    <div class="alloc-head">
+      <div><div class="title">${esc(a.title)}</div>
+        <div class="sub">${esc(ASSET_LABEL[a.assetClass] || a.assetClass)} · ${esc(pretty(a.riskLevel))} risk · ${esc(a.horizon)}</div></div>
+      <div class="amount num">${money(a.monthlyAmount)}<span class="muted">/mo · ${a.percent}%</span></div>
+    </div>
+    <div class="bar"><i class="${a.assetClass === 'EQUITY' ? 'want' : ''}" style="width:${Math.min(100, a.percent)}%"></i></div>
+    ${a.reason ? `<p class="reason">${esc(a.reason)}</p>` : ''}
+    <details><summary>What is this?</summary><p class="muted">${esc(a.about)}</p></details>
+  </li>`;
+}
+
+function guidanceBody(g) {
+  const b = g.budget;
+  const ai = g.mode === 'AI_CHECKED';
+  return `<div class="card mode ${ai ? 'ai' : ''}">
+      <strong>${ai ? 'AI-personalised, safety-checked' : 'Rule-based guidance'}</strong>
+      <span class="muted">${esc(g.modeNote)} · ${esc(new Date(g.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }))}</span>
+    </div>
+    <section class="grid stats">
+      <div class="card stat"><div class="label">Left after EMIs and spending</div><div class="value num ${Number(b.disposableIncome) < 0 ? 'neg' : ''}">${money(b.disposableIncome)}</div></div>
+      <div class="card stat"><div class="label">Set aside each month</div><div class="value num">${money(b.investableAmount)}</div></div>
+      <div class="card stat"><div class="label">To emergency fund</div><div class="value num">${money(b.emergencyFundContribution)}</div></div>
+      <div class="card stat"><div class="label">To invest</div><div class="value num">${money(b.amountToInvest)}</div></div>
+    </section>
+    ${g.warnings.length ? `<section class="card"><h2>Things to know</h2><ul class="list">${g.warnings.map(w => `<li class="item insight">
+      <span class="sev ${esc(w.severity.toLowerCase())}">${esc(SEVERITY_LABEL[w.severity] || w.severity)}</span>
+      <div class="main"><div class="title">${esc(w.title)}</div><div class="sub">${esc(w.detail)}</div></div></li>`).join('')}</ul></section>` : ''}
+    ${g.actions.length ? `<section class="card"><h2>First steps, before investing</h2><ol class="steps">${g.actions.map(a => `<li>
+      <div class="title">${esc(a.title)}${a.monthlyAmount ? ` <span class="tag">${money(a.monthlyAmount)}/mo</span>` : ''}</div>
+      <div class="sub">${esc(a.detail)}</div></li>`).join('')}</ol></section>` : ''}
+    <section class="card">
+      <h2>Suggested monthly split</h2>
+      <p class="muted small">Your risk profile is ${esc(pretty(g.riskProfile))}, so at most ${g.equityCapPercent}% goes to equity.</p>
+      ${g.summary ? `<p class="ai-summary"><span class="tag">AI explanation</span> ${esc(g.summary)}</p>` : ''}
+      ${g.allocations.length ? `<ul class="list">${g.allocations.map(allocationRow).join('')}</ul>`
+        : '<p class="empty">No investing suggestion this month. Focus on the steps above first.</p>'}
+    </section>
+    <section class="card">
+      <h2>Our promises</h2>
+      <ul class="promises">${g.principles.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      <p class="disclaimer">${esc(g.disclaimer)}</p>
+    </section>`;
+}
+
+async function renderGuidance() {
+  const [guidance, safety] = await Promise.all([latestGuidance(), api('/api/ai/safety-profile')]);
+  return `<div class="page-head"><div><h1>Money guidance</h1><span class="muted">Free and educational. Not investment advice.</span></div>
+      <button class="primary" id="generate">${guidance ? 'Refresh guidance' : 'Get my guidance'}</button></div>
+    <section class="grid two guidance">
+      <div class="guidance-main">${guidance ? guidanceBody(guidance)
+        : `<div class="card"><h2>How this works</h2><p class="muted">BudgetX looks at your salary, EMIs and spending, then checks
+          the basics first: no spending gap, an emergency fund, and health and life cover. Only then does it suggest how to split
+          what's left across broad, regulated categories like index funds, PPF and deposits. We never name specific funds or earn
+          commissions.</p><p class="muted">Answer the questions on the right, then press <strong>Get my guidance</strong>.</p></div>`}</div>
+      <div class="card safety"><h2>Your safety net</h2>
+        <p class="muted small">We can't see your bank or policies, so tell us. This stays in BudgetX.</p>
+        ${safetyForm(safety)}</div>
+    </section>`;
+}
+
+PAGES.guidance.bind = view => {
+  const generate = async () => {
+    await api('/api/recommendations/generate', 'POST');
+    await refreshView();
+  };
+  const button = view.querySelector('#generate');
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    button.textContent = 'Working it out…';
+    try {
+      await generate();
+    } catch (e) {
+      toast(e.message);
+      button.disabled = false;
+      button.textContent = 'Try again';
+    }
+  });
+  bindForm(view.querySelector('#safety'), async values => {
+    await api('/api/ai/safety-profile', 'PUT', {
+      emergencySavings: Number(values.emergencySavings),
+      dependents: Number(values.dependents),
+      hasTermInsurance: values.hasTermInsurance === 'true',
+      hasHealthInsurance: values.hasHealthInsurance === 'true',
+    });
+    toast('Saved');
+    await generate();
+  });
+};
+
 // ---------- profile ----------
 
 async function renderProfile() {
@@ -506,6 +634,7 @@ async function renderProfile() {
           <label>Email<input value="${esc(u.email)}" disabled></label>
           <label>Phone <span class="hint">(optional)</span><input name="phone" type="tel" value="${esc(u.phone)}"></label>
           <label>Occupation <span class="hint">(optional)</span><input name="occupation" maxlength="100" value="${esc(u.occupation)}"></label>
+          <label>Date of birth <span class="hint">(used to keep guidance age-appropriate)</span><input name="dateOfBirth" type="date" max="${localDate()}" value="${esc(u.dateOfBirth)}"></label>
           <label>Monthly salary (₹)<input name="monthlySalary" type="number" min="0" step="0.01" required inputmode="decimal" value="${esc(u.monthlySalary)}"></label>
           <label>Risk profile<select name="riskProfile">${options(RISK_PROFILES, u.riskProfile)}</select></label>
           <p class="form-error"></p>
