@@ -29,6 +29,7 @@ Each service owns its MySQL database. Inter-service calls use OpenFeign (sync) a
 | user-service | Done (register, login, refresh, profile, internal Feign endpoints) |
 | emi-service | Done (loan CRUD, EMI calculation, outstanding balance, monthly total) |
 | expense-service | Done (seeded categories, CRUD, monthly/yearly summaries, Kafka `budget.expense.logged`) |
+| frontend | Done (React web app / installable PWA for phone and laptop: login, dashboard, expenses, EMIs, profile) |
 | budget, ai-agent, market-data, investment, notification | Next phases |
 
 Gateway routes for the later services are already defined, so each one works through the
@@ -73,8 +74,9 @@ mvn clean package -DskipTests
 docker compose --profile all up -d --build
 ```
 
-Only the gateway (8080) and Eureka dashboard (8761) are published; business services are reached
-through the gateway.
+The web app is at http://localhost:3000 (set `FRONTEND_PORT=80` on a server). Its nginx container
+proxies `/api` to the gateway, so the browser talks to one origin. The gateway (8080) and Eureka
+dashboard (8761) are also published; business services are reached through the gateway.
 
 ### Local development
 
@@ -90,7 +92,19 @@ cd api-gateway   && mvn spring-boot:run
 
 # 3. Business services, any order
 cd user-service  && mvn spring-boot:run
+
+# 4. Web app on http://localhost:3000 (Vite proxies /api to localhost:8080)
+cd frontend && npm install && npm run dev
 ```
+
+## Frontend
+
+`frontend/` is a React 18 + Vite app. It is responsive (bottom tab bar on phones, sidebar on
+laptops) and installable as a PWA: open it in Chrome or Safari on a phone and choose
+*Add to Home Screen*. The service worker caches only the app shell, never `/api` responses.
+Screens for budget, AI recommendations, portfolio and notifications show as *Coming soon*
+until those services are built. Note that browsers only offer installation over HTTPS
+(or on localhost).
 
 `infrastructure/mysql/init.sql` creates all eight databases and grants the `budgetx` account
 access on the first MySQL start. Tables are created by JPA (`ddl-auto: update`).
