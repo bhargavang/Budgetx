@@ -5,7 +5,7 @@
 #
 # Safe to re-run: it pulls the latest code, rebuilds and restarts. An existing .env is kept.
 # What it does: installs Docker, adds swap on small VMs, writes .env with random secrets,
-# builds the jars inside a Maven container, starts the stack, and opens port 8080 in the
+# builds the jars inside a Maven container, starts the stack, and opens ports 8080 and 3000 in the
 # VM firewall. Only the API gateway (8080) is published; MySQL, Redis, Kafka and Eureka
 # are bound to 127.0.0.1 (see deploy/docker-compose.prod.yml).
 set -euo pipefail
@@ -55,7 +55,7 @@ MYSQL_PASSWORD=$(rand 32)
 JWT_SECRET=$(rand 64)
 OPENAI_API_KEY=
 ALPHAVANTAGE_API_KEY=
-CORS_ALLOWED_ORIGINS=http://localhost:3000${PUBLIC_IP:+,http://$PUBLIC_IP:8080}
+CORS_ALLOWED_ORIGINS=http://localhost:3000${PUBLIC_IP:+,http://$PUBLIC_IP:8080,http://$PUBLIC_IP:3000}
 ENVEOF
   umask 022
 else
@@ -78,16 +78,19 @@ log "Building images and starting BudgetX"
 COMPOSE="$DOCKER compose -f docker-compose.yml -f deploy/docker-compose.prod.yml --profile all"
 $COMPOSE up -d --build --remove-orphans
 
-# ---------- 7. Open port 8080 in the VM firewall ----------
+# ---------- 7. Open ports 8080 (gateway + built-in web app) and 3000 (React app) ----------
 # Oracle's Ubuntu images ship iptables rules that REJECT everything except SSH.
-log "Opening port 8080 in the VM firewall"
-if command -v ufw >/dev/null 2>&1 && $SUDO ufw status | grep -q "Status: active"; then
-  $SUDO ufw allow 8080/tcp
-fi
-if ! $SUDO iptables -C INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT 2>/dev/null; then
-  $SUDO iptables -I INPUT 6 -p tcp --dport 8080 -m state --state NEW -j ACCEPT 2>/dev/null \
-    || $SUDO iptables -I INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT
-fi
+FRONTEND_PORT=$(grep -E '^FRONTEND_PORT=' .env 2>/dev/null | cut -d= -f2); FRONTEND_PORT=${FRONTEND_PORT:-3000}
+log "Opening ports 8080 and $FRONTEND_PORT in the VM firewall"
+for PORT in 8080 "$FRONTEND_PORT"; do
+  if command -v ufw >/dev/null 2>&1 && $SUDO ufw status | grep -q "Status: active"; then
+    $SUDO ufw allow "$PORT"/tcp
+  fi
+  if ! $SUDO iptables -C INPUT -p tcp --dport "$PORT" -m state --state NEW -j ACCEPT 2>/dev/null; then
+    $SUDO iptables -I INPUT 6 -p tcp --dport "$PORT" -m state --state NEW -j ACCEPT 2>/dev/null \
+      || $SUDO iptables -I INPUT -p tcp --dport "$PORT" -m state --state NEW -j ACCEPT
+  fi
+done
 if command -v netfilter-persistent >/dev/null 2>&1; then
   $SUDO netfilter-persistent save >/dev/null 2>&1 || true
 elif [ -d /etc/iptables ]; then
@@ -116,12 +119,13 @@ else
 fi
 cat <<MSG
 
-  Web app:  http://${PUBLIC_IP:-<your-public-ip>}:8080/
+  Web app:  http://${PUBLIC_IP:-<your-public-ip>}:${FRONTEND_PORT}/   (React app)
+            http://${PUBLIC_IP:-<your-public-ip>}:8080/   (built-in app)
   Gateway:  http://${PUBLIC_IP:-<your-public-ip>}:8080/actuator/health
   Swagger:  http://${PUBLIC_IP:-<your-public-ip>}:8080/swagger-ui.html
 
   If the URL above times out from your laptop, add an ingress rule in Oracle Cloud:
   Networking > Virtual Cloud Networks > (your VCN) > Security Lists > Default Security List
-  > Add Ingress Rule: Source CIDR 0.0.0.0/0, IP Protocol TCP, Destination Port 8080.
+  > Add Ingress Rule: Source CIDR 0.0.0.0/0, IP Protocol TCP, Destination Port 8080, and another for port ${FRONTEND_PORT}.
 
 MSG
