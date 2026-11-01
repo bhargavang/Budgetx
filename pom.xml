@@ -25,9 +25,9 @@
         <module>user-service</module>
         <module>emi-service</module>
         <module>expense-service</module>
-        <!-- Enabled as each phase lands:
         <module>budget-service</module>
         <module>ai-agent-service</module>
+        <!-- Enabled as each phase lands:
         <module>market-data-service</module>
         <module>investment-service</module>
         <module>notification-service</module>
@@ -39,6 +39,7 @@
         <spring-cloud.version>2023.0.2</spring-cloud.version>
         <jjwt.version>0.12.5</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
+        <anthropic-java.version>3.2.0</anthropic-java.version>
     </properties>
 
     <dependencyManagement>

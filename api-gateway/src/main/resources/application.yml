@@ -125,6 +125,7 @@ budgetx:
       - /api/users/*/profile
       - /api/emis/total
       - /api/expenses/total
+      - /api/budgets/summary
 
 springdoc:
   swagger-ui:
