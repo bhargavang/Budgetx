@@ -27,6 +27,7 @@ Generate new token > Repository access: only `budgetx` > Permissions: Contents =
 Type it on the VM only; never paste it into a chat.
 
 ## 4. Check it
+- `http://<PUBLIC_IP>:8080/` opens the web app (create an account to start)
 - `http://<PUBLIC_IP>:8080/actuator/health` should return `{"status":"UP"}`
 - `http://<PUBLIC_IP>:8080/swagger-ui.html` lists the APIs
 

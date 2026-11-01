@@ -116,6 +116,7 @@ else
 fi
 cat <<MSG
 
+  Web app:  http://${PUBLIC_IP:-<your-public-ip>}:8080/
   Gateway:  http://${PUBLIC_IP:-<your-public-ip>}:8080/actuator/health
   Swagger:  http://${PUBLIC_IP:-<your-public-ip>}:8080/swagger-ui.html
 
