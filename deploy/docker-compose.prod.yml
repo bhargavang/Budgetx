@@ -1,0 +1,34 @@
+# Production override used by deploy/oracle-setup.sh.
+# Only the API gateway is reachable from outside; everything else listens on 127.0.0.1
+# (Docker-published ports bypass the host's iptables INPUT rules, so this matters).
+services:
+  mysql:
+    ports: !override
+      - "127.0.0.1:3306:3306"
+    restart: unless-stopped
+  redis:
+    ports: !override
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+  zookeeper:
+    ports: !override
+      - "127.0.0.1:2181:2181"
+    restart: unless-stopped
+  kafka:
+    ports: !override
+      - "127.0.0.1:9092:9092"
+    restart: unless-stopped
+  eureka-server:
+    ports: !override
+      - "127.0.0.1:8761:8761"
+    restart: unless-stopped
+  config-server:
+    restart: unless-stopped
+  api-gateway:
+    restart: unless-stopped
+  user-service:
+    restart: unless-stopped
+  emi-service:
+    restart: unless-stopped
+  expense-service:
+    restart: unless-stopped
