@@ -134,5 +134,15 @@ services:
     environment:
       <<: *service-env
 
+  # ---------- web frontend (nginx serves the React build and proxies /api to the gateway) ----------
+  frontend:
+    build: ./frontend
+    profiles: ["all"]
+    depends_on:
+      - api-gateway
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    restart: unless-stopped
+
 volumes:
   mysql_data:
