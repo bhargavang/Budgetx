@@ -8,6 +8,7 @@ code() { curl -s -o "$BODY" -w '%{http_code}' --max-time 20 "$@"; }
 
 check "gateway health"                 "$(code "$BASE/actuator/health")" 200
 grep -q '"UP"' "$BODY" && echo "      $(cat "$BODY")"
+check "web app"                        "$(code "$BASE/")" 200
 EMAIL="smoke$(date +%s)$RANDOM@example.com"; PW='Sm0ke-test-pass'
 check "register"                       "$(code -X POST "$BASE/api/auth/register" -H 'Content-Type: application/json' \
   -d "{\"fullName\":\"Smoke Test\",\"email\":\"$EMAIL\",\"password\":\"$PW\",\"monthlySalary\":50000}")" 201
