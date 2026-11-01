@@ -134,5 +134,37 @@ services:
     environment:
       <<: *service-env
 
+  budget-service:
+    build: ./budget-service
+    profiles: ["all"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    environment:
+      <<: *service-env
+
+  ai-agent-service:
+    build: ./ai-agent-service
+    profiles: ["all"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    environment:
+      <<: *service-env
+      # Optional. Empty = rules-only guidance. Set it in .env, never commit it.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5-5}
+      AI_DAILY_LIMIT_PER_USER: ${AI_DAILY_LIMIT_PER_USER:-5}
+
 volumes:
   mysql_data:
