@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: ai-agent-service
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:ai;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+budgetx:
+  ai:
+    anthropic-api-key: ""
+
+eureka:
+  client:
+    enabled: false

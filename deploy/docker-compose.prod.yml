@@ -36,3 +36,11 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Kolkata # dates like "today" must match the users' calendar, not UTC
+  budget-service:
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Kolkata # "this month" must match the users' calendar, not UTC
+  ai-agent-service:
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Kolkata

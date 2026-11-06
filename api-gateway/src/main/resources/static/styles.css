@@ -125,6 +125,39 @@ dialog h2 { font-size: 1.15rem; margin-bottom: 16px; }
 }
 #toast.show { opacity: 1; }
 
+/* Guidance */
+.guidance { grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); align-items: start; }
+.guidance-main { display: grid; gap: 16px; min-width: 0; }
+.guidance-main .stats { margin-bottom: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.small { font-size: .85rem; }
+.mode { display: flex; flex-direction: column; gap: 2px; border-left: 4px solid var(--line); }
+.mode.ai { border-left-color: var(--accent); }
+.sev { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; align-self: flex-start; }
+.sev.critical { background: var(--danger); color: var(--on-accent); }
+.sev.warning { background: var(--warn); color: var(--on-accent); }
+.sev.info { background: var(--accent-soft); color: var(--text); }
+.insight { align-items: flex-start; }
+.steps { margin: 0; padding-left: 1.25em; display: grid; gap: 12px; }
+.steps .title { font-weight: 600; }
+.steps .sub, .reason { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.alloc { padding: 12px 0; border-top: 1px solid var(--line); }
+.alloc:first-child { border-top: 0; }
+.alloc-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.alloc .title { font-weight: 600; }
+.alloc .sub { color: var(--muted); font-size: .85rem; }
+.alloc .amount { font-weight: 650; text-align: right; white-space: nowrap; }
+.alloc .amount span { display: block; font-weight: 400; font-size: .8rem; }
+.alloc .reason { margin: 8px 0 4px; }
+.alloc details { font-size: .9rem; }
+.alloc summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.ai-summary { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; margin: 0 0 8px; }
+.ai-summary .tag { margin: 0 6px 0 0; background: var(--surface); }
+.promises { margin: 0 0 12px; padding-left: 1.25em; display: grid; gap: 4px; font-size: .9rem; }
+.disclaimer { font-size: .8rem; color: var(--muted); margin: 0; border-top: 1px solid var(--line); padding-top: 10px; }
+@media (max-width: 760px) {
+  .guidance { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 520px) {
   .item { flex-wrap: wrap; }
   .item .btns { width: 100%; justify-content: flex-end; }
