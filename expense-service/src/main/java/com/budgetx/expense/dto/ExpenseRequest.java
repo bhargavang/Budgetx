@@ -16,5 +16,6 @@ public record ExpenseRequest(
         @NotNull @DecimalMin("0.01") @Digits(integer = 10, fraction = 2) BigDecimal amount,
         @Size(max = 255) String description,
         @NotNull @PastOrPresent LocalDate expenseDate,
-        PaymentMethod paymentMethod) {
+        PaymentMethod paymentMethod,
+        @Size(max = 1000) String note) {
 }

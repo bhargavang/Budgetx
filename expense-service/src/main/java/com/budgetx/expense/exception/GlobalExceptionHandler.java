@@ -18,6 +18,11 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(UpstreamUnavailableException.class)
+    public ProblemDetail handleUpstream(UpstreamUnavailableException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
     /** The gateway always sets X-User-Id on authenticated requests; its absence means no valid token. */
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ProblemDetail handleMissingHeader(MissingRequestHeaderException ex) {
