@@ -4,6 +4,7 @@ import { useAuth } from '../AuthContext';
 import { Alert, Field, Modal, Money, Spinner } from '../components/ui';
 import { date as fmtDate, label, money, today } from '../format';
 import { ExpenseForm } from './Expenses';
+import { EXPENSE_ADDED } from '../components/PayFlow';
 
 function shift(iso, days) {
   const d = new Date(`${iso}T00:00:00`);
@@ -121,6 +122,11 @@ export default function Today() {
   }, [day]);
 
   useEffect(load, [load]);
+
+  useEffect(() => {
+    window.addEventListener(EXPENSE_ADDED, load);
+    return () => window.removeEventListener(EXPENSE_ADDED, load);
+  }, [load]);
 
   const remove = async (e) => {
     if (!window.confirm(`Delete ${money(e.amount)} on ${e.categoryName}?`)) return;

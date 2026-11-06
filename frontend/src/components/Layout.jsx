@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { ThemePicker, ThemeToggle } from '../theme';
+import { PayProvider, usePay } from './PayFlow';
 
 const NAV = [
   { to: '/', label: 'Home', icon: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', end: true },
@@ -20,13 +21,33 @@ function Icon({ d }) {
   );
 }
 
+const PAY_ICON = 'M3 7h18v12H3zM3 11h18M7 15h3M16 4l2 3M8 4 6 7';
+
+function PayButton({ className = '' }) {
+  const { openPay } = usePay();
+  return (
+    <button className={`btn btn-primary pay-btn ${className}`} onClick={() => openPay()}>
+      <Icon d={PAY_ICON} /> Pay
+    </button>
+  );
+}
+
 export default function Layout() {
+  return (
+    <PayProvider>
+      <Shell />
+    </PayProvider>
+  );
+}
+
+function Shell() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   return (
     <div className="shell">
       <aside className="sidebar">
         <div className="brand"><img src="/icon.svg" alt="" width="32" height="32" /> BudgetX</div>
+        <PayButton className="btn-block" />
         <nav>
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className="side-link">
@@ -46,7 +67,10 @@ export default function Layout() {
 
       <header className="topbar">
         <div className="brand"><img src="/icon.svg" alt="" width="28" height="28" /> BudgetX</div>
-        <ThemeToggle />
+        <div className="topbar-actions">
+          <PayButton />
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="content">

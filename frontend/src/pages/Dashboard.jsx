@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { emis, expenses, users } from '../api';
 import { useAuth } from '../AuthContext';
 import { Alert, Money, Spinner, Stat } from '../components/ui';
 import { MONTHS, date, money } from '../format';
+import { EXPENSE_ADDED } from '../components/PayFlow';
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const load = useCallback(() => {
     const now = new Date();
     Promise.allSettled([
       users.me(),
@@ -31,6 +32,12 @@ export default function Dashboard() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(load, [load]);
+  useEffect(() => {
+    window.addEventListener(EXPENSE_ADDED, load);
+    return () => window.removeEventListener(EXPENSE_ADDED, load);
+  }, [load]);
 
   if (!data) return <Spinner />;
 
