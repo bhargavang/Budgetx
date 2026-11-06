@@ -48,7 +48,7 @@ function faceTexture(base, ink) {
   return t;
 }
 
-function coinMaterials(base, ink) {
+export function coinMaterials(base, ink) {
   const face = faceTexture(base, ink);
   const edge = new MeshStandardMaterial({ color: new Color(base).multiplyScalar(0.8), metalness: 0.55, roughness: 0.35 });
   const top = new MeshStandardMaterial({ map: face, metalness: 0.35, roughness: 0.4 });

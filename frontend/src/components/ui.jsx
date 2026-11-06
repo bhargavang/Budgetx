@@ -66,8 +66,9 @@ export function Empty({ title, children }) {
 }
 
 export function Stat({ label, value, sub, tone }) {
+  const tilt = useTilt();
   return (
-    <div className={`stat${tone ? ` stat-${tone}` : ''}`}>
+    <div ref={tilt} className={`stat tilt${tone ? ` stat-${tone}` : ''}`}>
       <span className="stat-label">{label}</span>
       <span className="stat-value">{value}</span>
       {sub && <span className="stat-sub">{sub}</span>}
@@ -77,6 +78,42 @@ export function Stat({ label, value, sub, tone }) {
 
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+// Cards lean a few degrees toward the mouse, with a soft light that follows it. Only for a real mouse
+// (phones keep their normal tap feel) and never when the device asks for reduced motion.
+export function useTilt(max = 6) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || reducedMotion() || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return undefined;
+    let raf = 0;
+    const move = (e) => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      const y = (e.clientY - r.top) / r.height;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        el.style.setProperty('--rx', `${((0.5 - y) * max).toFixed(2)}deg`);
+        el.style.setProperty('--ry', `${((x - 0.5) * max).toFixed(2)}deg`);
+        el.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+        el.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+      });
+    };
+    const leave = () => {
+      cancelAnimationFrame(raf);
+      el.style.removeProperty('--rx');
+      el.style.removeProperty('--ry');
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerleave', leave);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerleave', leave);
+    };
+  }, [max]);
+  return ref;
+}
 
 // A rupee amount that counts up to its value (and eases between values when it changes).
 export function Money({ value, signed = false }) {
