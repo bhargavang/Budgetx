@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { DEMO } from '../api';
 import { ThemeToggle } from '../theme';
 import { Alert, Field } from '../components/ui';
 import Coins3D from '../components/Coins3D';
 
 export default function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // The demo build accepts any sign-in, so fill one in to save visitors the typing.
+  const [email, setEmail] = useState(DEMO ? 'demo@budgetx.app' : '');
+  const [password, setPassword] = useState(DEMO ? 'demo1234' : '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 

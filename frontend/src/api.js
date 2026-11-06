@@ -3,6 +3,13 @@
 
 const STORAGE_KEY = 'budgetx.auth';
 
+// Demo builds (VITE_DEMO=true, used for the Netlify preview) answer /api calls from a pretend backend
+// in the browser. Normal builds leave this out entirely.
+export const DEMO = import.meta.env.VITE_DEMO === 'true';
+const doFetch = DEMO
+  ? (url, opts) => import('./demo/backend.js').then((m) => m.demoFetch(url, opts))
+  : (url, opts) => fetch(url, opts);
+
 export function loadSession() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
@@ -69,7 +76,7 @@ async function parseError(res) {
 async function refreshTokens() {
   if (!session?.refreshToken) return false;
   if (!refreshing) {
-    refreshing = fetch('/api/auth/refresh', {
+    refreshing = doFetch('/api/auth/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: session.refreshToken }),
@@ -103,7 +110,7 @@ export async function api(path, { method = 'GET', body, query, auth = true } = {
     const headers = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (auth && session?.accessToken) headers.Authorization = `Bearer ${session.accessToken}`;
-    return fetch(url, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    return doFetch(url, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
   };
 
   let res;
