@@ -22,6 +22,9 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     Optional<Expense> findByExpenseIdAndUserId(Long expenseId, Long userId);
 
     @EntityGraph(attributePaths = "category")
+    List<Expense> findByUserIdAndExpenseDateOrderByCreatedAtAsc(Long userId, LocalDate expenseDate);
+
+    @EntityGraph(attributePaths = "category")
     @Query("""
             select e from Expense e
             where e.userId = :userId

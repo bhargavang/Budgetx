@@ -108,6 +108,11 @@ public class ExpenseService {
         expense.setDescription(request.description());
         expense.setExpenseDate(request.expenseDate());
         expense.setPaymentMethod(request.paymentMethod());
+        expense.setNote(blankToNull(request.note()));
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.strip();
     }
 
     private Expense find(Long userId, Long expenseId) {

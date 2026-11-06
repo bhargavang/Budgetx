@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Emis from './pages/Emis';
 import Expenses from './pages/Expenses';
+import Today from './pages/Today';
 import Profile from './pages/Profile';
 import ComingSoon from './pages/ComingSoon';
 
@@ -26,6 +27,7 @@ export default function App() {
       <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Dashboard />} />
+        <Route path="today" element={<Today />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="emis" element={<Emis />} />
         <Route path="profile" element={<Profile />} />

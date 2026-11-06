@@ -159,3 +159,10 @@ export const expenses = {
   remove: (id) => api(`/expenses/${id}`, { method: 'DELETE' }),
   categories: () => api('/expense-categories'),
 };
+
+export const daily = {
+  summary: (date) => api('/expenses/daily', { query: { date } }),
+  saveNote: (date, note) => api(`/expenses/daily/${date}/note`, { method: 'PUT', body: { note } }),
+  settings: () => api('/expenses/daily/settings'),
+  saveSettings: (monthlySavingsGoal) => api('/expenses/daily/settings', { method: 'PUT', body: { monthlySavingsGoal } }),
+};

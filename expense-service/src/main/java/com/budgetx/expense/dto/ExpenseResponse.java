@@ -13,7 +13,8 @@ public record ExpenseResponse(
         BigDecimal amount,
         String description,
         LocalDate expenseDate,
-        PaymentMethod paymentMethod) {
+        PaymentMethod paymentMethod,
+        String note) {
 
     public static ExpenseResponse from(Expense expense) {
         return new ExpenseResponse(
@@ -23,6 +24,7 @@ public record ExpenseResponse(
                 expense.getAmount(),
                 expense.getDescription(),
                 expense.getExpenseDate(),
-                expense.getPaymentMethod());
+                expense.getPaymentMethod(),
+                expense.getNote());
     }
 }

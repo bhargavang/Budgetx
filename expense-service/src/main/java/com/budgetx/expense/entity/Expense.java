@@ -50,6 +50,10 @@ public class Expense {
     @Column(length = 255)
     private String description;
 
+    /** Optional free-text note the user jots down about this expense. */
+    @Column(length = 1000)
+    private String note;
+
     @Column(nullable = false)
     private LocalDate expenseDate;
 
