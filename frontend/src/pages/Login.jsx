@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { ThemeToggle } from '../theme';
 import { Alert, Field } from '../components/ui';
+import Coins3D from '../components/Coins3D';
 
 export default function Login() {
   const { login } = useAuth();
@@ -26,6 +27,7 @@ export default function Login() {
 
   return (
     <div className="auth-page">
+      <Coins3D mode="field" className="auth-coins" />
       <ThemeToggle className="auth-theme" />
       <form className="card auth-card" onSubmit={submit}>
         <div className="auth-brand"><img src="/icon.svg" alt="" width="48" height="48" /><h1>BudgetX</h1></div>
