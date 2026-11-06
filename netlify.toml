@@ -1,0 +1,20 @@
+# Netlify hosts the BudgetX web app as a static demo: sample data that lives in the visitor's
+# browser, no Java services needed. Connect this repo in Netlify and it picks these settings up.
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build:demo"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# The app is a single-page app: send every route (e.g. /today) to index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
