@@ -5,11 +5,13 @@ import { useAuth } from '../AuthContext';
 import { Alert, Money, Spinner, Stat } from '../components/ui';
 import { MONTHS, date, money } from '../format';
 import { EXPENSE_ADDED } from '../components/PayFlow';
+import Stage, { canUse3D } from '../three/Stage';
 
 export default function Dashboard() {
   const { user, updateUser } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [picked, setPicked] = useState(null);
 
   const load = useCallback(() => {
     const now = new Date();
@@ -51,16 +53,28 @@ export default function Dashboard() {
   const maxMonth = Math.max(1, ...data.year.map((m) => Number(m.total)));
   const byMonth = Object.fromEntries(data.year.map((m) => [m.month, Number(m.total)]));
   const thisMonth = new Date().getMonth() + 1;
+  // Coins on the Home banner: one per eighth of salary still left this month.
+  const stack = salary > 0 ? Math.max(0, Math.min(8, Math.round((Math.max(0, left) / salary) * 8))) : 0;
+  const slices = cats.map((c) => ({ total: Number(c.total), essential: c.essential }));
+  const catTotal = slices.reduce((a, c) => a + c.total, 0);
+  const pick = picked !== null ? cats[picked] : null;
 
   return (
     <>
-      <div className="page-head">
-        <div>
+      <section className="card hero">
+        <Stage scene="hero" stack={stack} className="hero-stage" />
+        <div className="hero-text">
           <h1>Hi, {user?.fullName?.split(' ')[0] || 'there'}</h1>
           <p className="muted">{MONTHS[thisMonth - 1]} {new Date().getFullYear()} at a glance</p>
+          {salary > 0 && (
+            <p className="hero-left">
+              {left >= 0 ? <><strong><Money value={left} /></strong> left to spend</> : <>Over budget by <strong><Money value={-left} /></strong></>}
+            </p>
+          )}
+          {stack > 0 && <p className="hero-note">The coin stack shows it: one coin for every eighth of your salary.</p>}
+          <div className="hero-actions"><Link to="/expenses?add=1" className="btn btn-primary">+ Add expense</Link></div>
         </div>
-        <Link to="/expenses?add=1" className="btn btn-primary">+ Add expense</Link>
-      </div>
+      </section>
       <Alert>{error}</Alert>
 
       <div className="stats">
@@ -79,9 +93,20 @@ export default function Dashboard() {
           {cats.length === 0 ? (
             <p className="muted">No expenses this month yet.</p>
           ) : (
+            <>
+            {canUse3D() && <div className="ring-wrap">
+              <Stage scene="ring" slices={slices} selected={picked} onPick={setPicked} className="ring-stage" />
+              <div className="ring-center" aria-live="polite">
+                <span className="small">{pick ? pick.categoryName : 'This month'}</span>
+                <span className="num">{money(pick ? pick.total : catTotal)}</span>
+                {pick && <span className="small">{Math.round((Number(pick.total) / (catTotal || 1)) * 100)}% of spending</span>}
+                {!pick && <span className="small">Point at a slice or a bar</span>}
+              </div>
+            </div>}
             <ul className="bars">
               {cats.map((c, i) => (
-                <li key={c.categoryId} style={{ '--i': i }}>
+                <li key={c.categoryId} style={{ '--i': i }} className={picked === i ? 'picked' : undefined}
+                  onPointerEnter={() => setPicked(i)} onPointerLeave={() => setPicked(null)}>
                   <div className="bar-row">
                     <span>{c.categoryName} {!c.essential && <span className="tag">want</span>}</span>
                     <span className="num">{money(c.total)}</span>
@@ -91,6 +116,7 @@ export default function Dashboard() {
                 </li>
               ))}
             </ul>
+            </>
           )}
         </section>
 
