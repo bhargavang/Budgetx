@@ -166,3 +166,10 @@ export const daily = {
   settings: () => api('/expenses/daily/settings'),
   saveSettings: (monthlySavingsGoal) => api('/expenses/daily/settings', { method: 'PUT', body: { monthlySavingsGoal } }),
 };
+
+export const guidance = {
+  latest: () => api('/recommendations/latest'),
+  generate: () => api('/recommendations/generate', { method: 'POST' }),
+  safetyProfile: () => api('/ai/safety-profile'),
+  saveSafetyProfile: (data) => api('/ai/safety-profile', { method: 'PUT', body: data }),
+};

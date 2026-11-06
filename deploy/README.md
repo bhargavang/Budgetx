@@ -31,6 +31,16 @@ Type it on the VM only; never paste it into a chat.
 - `http://<PUBLIC_IP>:8080/actuator/health` should return `{"status":"UP"}`
 - `http://<PUBLIC_IP>:8080/swagger-ui.html` lists the APIs
 
+## Turn on AI guidance (optional)
+Guidance works without any key, using BudgetX's built-in rules. To add AI-personalised explanations
+(checked against the same rules), create an API key at https://console.anthropic.com, then on the VM:
+```bash
+cd ~/budgetx && nano .env        # set ANTHROPIC_API_KEY=... (type it here only, never in a chat)
+bash deploy/oracle-setup.sh      # restarts with the key
+```
+Each user gets at most `AI_DAILY_LIMIT_PER_USER` (default 5) AI calls a day, which keeps the bill
+bounded. `ANTHROPIC_MODEL=claude-haiku-5-5` in `.env` is much cheaper than the default.
+
 ## Updating later
 ```bash
 cd ~/budgetx && bash deploy/oracle-setup.sh   # pulls, rebuilds, restarts; keeps .env
