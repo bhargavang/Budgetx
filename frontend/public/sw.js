@@ -1,6 +1,6 @@
 // Minimal service worker: makes the app installable and lets the shell open offline.
 // API calls (/api/*) are never cached, so financial data is always fresh.
-const CACHE = 'budgetx-shell-v1';
+const CACHE = 'budgetx-shell-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/index.html'])));

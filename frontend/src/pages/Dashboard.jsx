@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { emis, expenses, users } from '../api';
 import { useAuth } from '../AuthContext';
-import { Alert, Spinner, Stat } from '../components/ui';
+import { Alert, Money, Spinner, Stat } from '../components/ui';
 import { MONTHS, date, money } from '../format';
 
 export default function Dashboard() {
@@ -57,12 +57,12 @@ export default function Dashboard() {
       <Alert>{error}</Alert>
 
       <div className="stats">
-        <Stat label="Monthly salary" value={money(salary)} />
-        <Stat label="EMIs this month" value={money(emiTotal)}
+        <Stat label="Monthly salary" value={<Money value={salary} />} />
+        <Stat label="EMIs this month" value={<Money value={emiTotal} />}
           sub={`${data.emi?.activeLoans || 0} active · ${emiRatio}% of salary`} tone={emiRatio > 40 ? 'warn' : undefined} />
-        <Stat label="Spent this month" value={money(spent)}
+        <Stat label="Spent this month" value={<Money value={spent} />}
           sub={data.month ? `${money(data.month.essentialTotal)} needs · ${money(data.month.discretionaryTotal)} wants` : ''} />
-        <Stat label="Left to spend" value={money(left)} tone={left < 0 ? 'bad' : 'good'}
+        <Stat label="Left to spend" value={<Money value={left} signed />} tone={left < 0 ? 'bad' : 'good'}
           sub={left < 0 ? 'Over budget this month' : 'After EMIs and expenses'} />
       </div>
 
@@ -73,8 +73,8 @@ export default function Dashboard() {
             <p className="muted">No expenses this month yet.</p>
           ) : (
             <ul className="bars">
-              {cats.map((c) => (
-                <li key={c.categoryId}>
+              {cats.map((c, i) => (
+                <li key={c.categoryId} style={{ '--i': i }}>
                   <div className="bar-row">
                     <span>{c.categoryName} {!c.essential && <span className="tag">want</span>}</span>
                     <span className="num">{money(c.total)}</span>
@@ -93,7 +93,9 @@ export default function Dashboard() {
             {MONTHS.map((m, i) => {
               const v = byMonth[i + 1] || 0;
               return (
-                <div className="month-col" key={m} title={`${m}: ${money(v)}`}>
+                <div className={`month-col${i + 1 === thisMonth ? ' current' : ''}`} key={m} style={{ '--i': i }}
+                  title={`${m}: ${money(v)}`}>
+                  <span className="month-tip">{money(v)}</span>
                   <div className="month-bar-wrap">
                     <div className={`month-bar${i + 1 === thisMonth ? ' current' : ''}`}
                       style={{ height: `${(v / maxMonth) * 100}%` }} />
