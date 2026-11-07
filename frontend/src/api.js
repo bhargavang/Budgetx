@@ -160,6 +160,13 @@ export const expenses = {
   categories: () => api('/expense-categories'),
 };
 
+export const daily = {
+  summary: (date) => api('/expenses/daily', { query: { date } }),
+  saveNote: (date, note) => api(`/expenses/daily/${date}/note`, { method: 'PUT', body: { note } }),
+  settings: () => api('/expenses/daily/settings'),
+  saveSettings: (monthlySavingsGoal) => api('/expenses/daily/settings', { method: 'PUT', body: { monthlySavingsGoal } }),
+};
+
 export const guidance = {
   latest: () => api('/recommendations/latest'),
   generate: () => api('/recommendations/generate', { method: 'POST' }),

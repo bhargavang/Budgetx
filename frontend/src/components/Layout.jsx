@@ -3,6 +3,7 @@ import { useAuth } from '../AuthContext';
 
 const NAV = [
   { to: '/', label: 'Home', icon: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', end: true },
+  { to: '/today', label: 'Today', icon: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M9 15h2' },
   { to: '/expenses', label: 'Expenses', icon: 'M4 5h16v14H4zM4 9h16M8 14h4' },
   { to: '/emis', label: 'EMIs', icon: 'M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6' },
   { to: '/guidance', label: 'Guidance', icon: 'M4 19V9M10 19V5M16 19v-7M22 19H2' },

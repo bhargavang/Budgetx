@@ -163,6 +163,11 @@ Business services read the caller from the `X-User-Id` header that the gateway s
 | GET | /api/expenses/summary/year?year= | Monthly totals for a year |
 | GET / PUT / DELETE | /api/expenses/{id} | Read, replace, delete one expense |
 | GET | /api/expenses/total?userId=&month=&year= | internal: total spent in a month (budget-service) |
+| GET | /api/expenses/daily?date= | Salary-based daily tracker: today's allowance, spent, remaining (day and month), the day's expenses and note. Defaults to today |
+| PUT | /api/expenses/daily/{date}/note | Save the free-text note for a day (blank clears it) |
+| GET / PUT | /api/expenses/daily/settings | Monthly savings goal taken out of salary before the daily budget |
+
+Daily budget: `spendable = salary − EMIs this month − savings goal`, `dailyBudget = spendable / days in month`. Each day's allowance is `(spendable − spent earlier this month) / days left (incl. that day)`, so overspending one day lowers the next. Salary comes from user-service and EMIs from emi-service over Feign; if emi-service is down the budget is still shown with `emiAvailable: false`. Every expense also takes an optional `note` (up to 1000 chars).
 
 Kafka event on `budget.expense.logged` (key = userId):
 

@@ -13,12 +13,12 @@ function monthRange(ym) {
   return { from: `${ym}-01`, to: `${ym}-${String(last).padStart(2, '0')}` };
 }
 
-function ExpenseForm({ initial, categories, onSaved, onCancel }) {
+export function ExpenseForm({ initial, categories, onSaved, onCancel, defaultDate }) {
   const [form, setForm] = useState(
     initial
       ? { categoryId: String(initial.categoryId), amount: initial.amount, description: initial.description || '',
-          expenseDate: initial.expenseDate, paymentMethod: initial.paymentMethod || '' }
-      : { categoryId: '', amount: '', description: '', expenseDate: today(), paymentMethod: 'UPI' }
+          expenseDate: initial.expenseDate, paymentMethod: initial.paymentMethod || '', note: initial.note || '' }
+      : { categoryId: '', amount: '', description: '', expenseDate: defaultDate || today(), paymentMethod: 'UPI', note: '' }
   );
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
@@ -36,6 +36,7 @@ function ExpenseForm({ initial, categories, onSaved, onCancel }) {
       description: form.description.trim() || null,
       expenseDate: form.expenseDate,
       paymentMethod: form.paymentMethod || null,
+      note: form.note.trim() || null,
     };
     try {
       if (initial) await expenses.update(initial.expenseId, body);
@@ -75,6 +76,10 @@ function ExpenseForm({ initial, categories, onSaved, onCancel }) {
           </select>
         </Field>
       </div>
+      <Field label="Note" error={errors.note} hint="Optional. Anything you want to remember about this spend.">
+        <textarea rows={3} maxLength={1000} value={form.note} onChange={set('note')}
+          placeholder="e.g. Split with Ravi, he owes me ₹200" />
+      </Field>
       <div className="form-actions">
         <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
         <button className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
@@ -160,6 +165,7 @@ export default function Expenses() {
                   <div className="muted small">
                     {e.categoryName} · {date(e.expenseDate)}{e.paymentMethod ? ` · ${label(e.paymentMethod)}` : ''}
                   </div>
+                  {e.note && <div className="note-line small">📝 {e.note}</div>}
                 </button>
                 <span className="num">{money(e.amount)}</span>
                 <button className="icon-btn" aria-label="Delete" onClick={() => remove(e)}>🗑</button>
