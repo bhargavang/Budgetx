@@ -132,7 +132,8 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .page { animation: fade-up 0.4s var(--ease) both; }
-.page .card, .page .stat { animation: fade-up 0.5s var(--ease) both; }
+/* backwards (not both) so the entrance animation lets go of transform afterwards and hover/tilt can use it */
+.page .card, .page .stat { animation: fade-up 0.5s var(--ease) backwards; }
 .page .stats > :nth-child(2), .page .grid-dash > :nth-child(1) { animation-delay: 0.05s; }
 .page .stats > :nth-child(3), .page .grid-dash > :nth-child(2) { animation-delay: 0.1s; }
 .page .stats > :nth-child(4), .page .grid-dash > :nth-child(3) { animation-delay: 0.15s; }
@@ -367,6 +368,49 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--p
 .stat-bad::after { background: var(--bad); }
 .stat-warn::after { background: var(--warn); }
 
+/* ---------- tilt cards ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .tilt { transform-style: preserve-3d; will-change: transform; }
+  .stat.tilt:hover {
+    transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-2px);
+    transition: box-shadow 0.25s var(--ease), transform 0.12s linear, border-color 0.25s ease;
+  }
+  .tilt::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+    background: radial-gradient(14rem circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%);
+  }
+  .tilt:hover::before { opacity: 1; }
+}
+
+/* ---------- 3D scenes (three.js, lazy loaded) ---------- */
+.stage { position: relative; }
+.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; animation: fade-in 0.8s ease both; }
+
+.hero {
+  position: relative; overflow: hidden; margin-bottom: 16px; padding: 22px 20px; min-height: 170px;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  background:
+    radial-gradient(28rem 16rem at 85% 30%, var(--primary-soft), transparent 70%),
+    var(--surface);
+}
+.hero-stage { position: absolute; inset: 0; pointer-events: none; }
+.hero-text { position: relative; z-index: 1; max-width: 62%; display: grid; gap: 4px; }
+.hero-text h1 { font-size: 1.7rem; }
+.hero-left { font-family: var(--serif); font-size: 1.15rem; margin-top: 6px; }
+.hero-left strong { font-weight: 600; color: var(--primary); }
+.hero-actions { margin-top: 12px; }
+.hero-note { font-size: 0.75rem; color: var(--muted); }
+@media (min-width: 900px) { .hero { min-height: 210px; padding: 28px 32px; } .hero-text h1 { font-size: 2.1rem; } }
+@media (max-width: 520px) { .hero-text { max-width: 64%; } .hero-note { display: none; } }
+
+.ring-wrap { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: center; gap: 8px; margin: -6px 0 10px; }
+.ring-stage { height: 200px; touch-action: pan-y; }
+.ring-center { display: grid; gap: 2px; min-width: 0; }
+.ring-center .num { font-family: var(--serif); font-size: 1.2rem; font-weight: 600; }
+.ring-center .small { color: var(--muted); }
+.bars li.picked .bar-row > span:first-child { color: var(--primary); }
+.bars li { cursor: default; }
+
 /* ---------- dashboard ---------- */
 .grid-dash { display: grid; gap: 16px; }
 @media (min-width: 900px) { .grid-dash { grid-template-columns: 1fr 1fr; } .span-2 { grid-column: 1 / -1; } }
@@ -562,3 +606,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--p
 .auth-page .auth-card { position: relative; z-index: 1; }
 :root[data-theme="dark"] .auth-coins { opacity: 0.7; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .auth-coins { opacity: 0.7; } }
+
+/* ---------- demo build banner ---------- */
+.demo-banner {
+  position: relative; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  padding: calc(env(safe-area-inset-top) + 6px) 16px 6px; font-size: 0.8rem; text-align: center;
+  background: var(--primary-soft); color: var(--text); border-bottom: 1px solid var(--border);
+}
+.demo-banner button {
+  font: inherit; font-weight: 600; color: var(--primary); background: none; border: 1px solid currentColor;
+  border-radius: 999px; padding: 2px 10px; cursor: pointer;
+}
+@media (max-width: 600px) { .demo-banner { flex-wrap: nowrap; font-size: 0.75rem; text-align: left; } .demo-more { display: none; } }

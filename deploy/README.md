@@ -59,3 +59,18 @@ $C down                     # stop (data in the mysql volume is kept)
 Only port 8080 (the API gateway) is reachable from the internet. MySQL, Redis, Kafka and Eureka
 listen on 127.0.0.1 only. To look at the Eureka dashboard, tunnel it:
 `ssh -i <key> -L 8761:localhost:8761 ubuntu@<PUBLIC_IP>` then open http://localhost:8761.
+
+## Free demo on Netlify (no backend)
+
+The web app can run as a static demo with sample data: a pretend backend inside the browser answers
+every `/api` call, and changes are saved only in that visitor's browser (the banner's **Reset** puts the
+sample data back). Nothing is sent anywhere. `netlify.toml` at the repo root has the settings.
+
+1. Sign in at https://app.netlify.com with GitHub, then **Add new site → Import an existing project → GitHub**
+   and pick `budgetx` (allow Netlify's GitHub app to see the private repo).
+2. Choose the branch to deploy (normally `main`). Netlify reads `netlify.toml`, so leave the build
+   settings as they are and press **Deploy**.
+3. The site appears at `https://<name>.netlify.app`. Rename it under **Site configuration → Change site name**.
+
+Locally: `cd frontend && npm run dev:demo` (or `npm run build:demo` for the static files in `dist/`).
+The normal `npm run build` does not include the demo backend.
