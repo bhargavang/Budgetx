@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { ThemeToggle } from '../theme';
 import { Alert, Field } from '../components/ui';
+import Coins3D from '../components/Coins3D';
 import { label } from '../format';
 
 const GENDERS = ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'];
@@ -38,6 +39,7 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      <Coins3D mode="field" className="auth-coins" />
       <ThemeToggle className="auth-theme" />
       <form className="card auth-card wide" onSubmit={submit}>
         <div className="auth-brand"><img src="/icon.svg" alt="" width="48" height="48" /><h1>Create account</h1></div>
