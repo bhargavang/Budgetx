@@ -159,3 +159,10 @@ export const expenses = {
   remove: (id) => api(`/expenses/${id}`, { method: 'DELETE' }),
   categories: () => api('/expense-categories'),
 };
+
+export const guidance = {
+  latest: () => api('/recommendations/latest'),
+  generate: () => api('/recommendations/generate', { method: 'POST' }),
+  safetyProfile: () => api('/ai/safety-profile'),
+  saveSafetyProfile: (data) => api('/ai/safety-profile', { method: 'PUT', body: data }),
+};

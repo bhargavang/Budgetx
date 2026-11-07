@@ -29,8 +29,10 @@ Each service owns its MySQL database. Inter-service calls use OpenFeign (sync) a
 | user-service | Done (register, login, refresh, profile, internal Feign endpoints) |
 | emi-service | Done (loan CRUD, EMI calculation, outstanding balance, monthly total) |
 | expense-service | Done (seeded categories, CRUD, monthly/yearly summaries, Kafka `budget.expense.logged`) |
+| budget-service | Done (salary - EMIs - spending via Feign, investable amount, Kafka `budget.overspend`) |
+| ai-agent-service | Done (free educational guidance: safety rules first, optional Claude AI checked against them) |
+| market-data, investment, notification | Next phases |
 | frontend | Done (React web app / installable PWA for phone and laptop: login, dashboard, expenses, EMIs, profile) |
-| budget, ai-agent, market-data, investment, notification | Next phases |
 
 Gateway routes for the later services are already defined, so each one works through the
 gateway as soon as it registers with Eureka.
@@ -59,7 +61,9 @@ openssl rand -base64 48
 | REDIS_HOST | Redis hostname | localhost |
 | KAFKA_BOOTSTRAP_SERVERS | Kafka servers | localhost:9092 |
 | JWT_SECRET | JWT signing secret, shared by gateway and user-service | 48 random bytes, base64 |
-| OPENAI_API_KEY | OpenAI API key (ai-agent-service) | sk-... |
+| ANTHROPIC_API_KEY | Optional Claude API key; empty = rules-only guidance | sk-ant-... |
+| ANTHROPIC_MODEL | Claude model for guidance | claude-opus-5-5 |
+| AI_DAILY_LIMIT_PER_USER | AI calls per user per day, then rules-only | 5 |
 | ALPHAVANTAGE_API_KEY | Market data API key (market-data-service) | your-key |
 | CORS_ALLOWED_ORIGINS | Origins allowed by the gateway | http://localhost:3000 |
 | EUREKA_URL | Eureka URL | http://localhost:8761/eureka/ |
@@ -181,15 +185,54 @@ curl localhost:8080/api/users/me -H "Authorization: Bearer $TOKEN"
 Swagger UI: http://localhost:8081/swagger-ui.html per service, or
 http://localhost:8080/swagger-ui.html at the gateway with a dropdown for every service.
 
+## API (budget-service)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | /api/budgets/current | This month: salary, EMIs, spending, disposable and investable amounts |
+| GET | /api/budgets/summary?userId=&month=&year= | internal: same, for ai-agent-service |
+
+Spending uses the higher of this month so far and last month, so the investable amount isn't
+inflated early in the month. Investable = 50/60/70% of what's left (conservative/moderate/aggressive).
+When an expense pushes a month over the salary, `budget.overspend` is published once for that month.
+
+## AI guidance (ai-agent-service)
+
+Free, educational guidance that users can trust. It is not personalised investment advice (that needs
+SEBI RIA registration), and every screen says so.
+
+| Method | Path | Description |
+|---|---|---|
+| GET / PUT | /api/ai/safety-profile | Emergency savings, dependents, term and health insurance (user-reported) |
+| POST | /api/recommendations/generate | Build guidance now |
+| GET | /api/recommendations/latest | Last guidance (every one is stored for review) |
+| GET | /api/ai/status | Whether AI is on and calls left today |
+
+How it stays safe:
+
+1. **Rules first, AI can't override them.** Overspending blocks investing. Heavy EMIs are flagged. An
+   emergency fund (6 months of outgo) takes 70% of savings while under 3 months covered, 40% up to 6.
+   Health cover, and pure term cover when someone depends on you, come before investing.
+2. **Caps.** Equity at most 30/50/70% by risk profile and never above 100 minus age. Gold at most 15%.
+   PPF limited to ₹12,500/month.
+3. **Categories only.** Index fund SIP, debt fund, PPF, FD/RD, gold ETF. Titles and descriptions come from
+   our code; the AI only picks percentages and writes short reasons.
+4. **AI output is untrusted.** Claude (official Anthropic Java SDK, structured JSON output) gets anonymous
+   numbers only. Its answer is validated: any reason naming a brand, a banned instrument (crypto, F&O,
+   penny stocks, ULIPs, chit funds...), a link, or a return figure is removed, and if the plan then breaks
+   100%, the equity cap or the gold cap, the rules-only split is shown instead, with a note saying so.
+5. **No key, no problem.** Without `ANTHROPIC_API_KEY` everything works rules-only. AI calls are capped per
+   user per day to keep a free service affordable.
+
 ## Tests
 
 ```bash
 mvn test
 ```
 
-33 tests across the modules: JWT and auth-flow tests in user-service, JWT filter tests in
+85 tests across the modules: JWT and auth-flow tests in user-service, JWT filter tests in
 api-gateway, EMI maths and API tests in emi-service, and API, summary and Kafka-publish tests in
-expense-service. Integration tests run on H2, so no Docker is needed for `mvn test`.
+expense-service, budget maths, API and overspend tests in budget-service, and rule-engine, AI-validator and guidance API tests in ai-agent-service. Integration tests run on H2, so no Docker is needed for `mvn test`.
 
 ## Disclaimer
 

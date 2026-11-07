@@ -7,7 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Emis from './pages/Emis';
 import Expenses from './pages/Expenses';
 import Profile from './pages/Profile';
-import ComingSoon from './pages/ComingSoon';
+import Guidance from './pages/Guidance';
 
 function RequireAuth({ children }) {
   const { signedIn } = useAuth();
@@ -29,7 +29,8 @@ export default function App() {
         <Route path="expenses" element={<Expenses />} />
         <Route path="emis" element={<Emis />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="insights" element={<ComingSoon />} />
+        <Route path="guidance" element={<Guidance />} />
+        <Route path="insights" element={<Navigate to="/guidance" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -277,3 +277,29 @@ input:focus, select:focus { outline: 2px solid var(--primary); outline-offset: -
   .modal-backdrop { align-items: center; padding: 24px; }
   .modal { max-width: 560px; border-radius: 18px; padding: 20px 24px 24px; }
 }
+
+/* Guidance */
+.guidance-layout { display: grid; gap: 16px; align-items: start; }
+@media (min-width: 900px) { .guidance-layout { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); } }
+.mode { display: grid; gap: 2px; border-left: 4px solid var(--border); }
+.mode-ai { border-left-color: var(--primary); }
+.sev { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; align-self: flex-start; }
+.sev-critical { background: var(--bad-soft); color: var(--bad); }
+.sev-warning { background: var(--bg); color: var(--warn); border: 1px solid currentColor; }
+.sev-info { background: var(--primary-soft); color: var(--primary); }
+.insight { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+.insight:first-child { border-top: 0; padding-top: 0; }
+.steps { margin: 0; padding-left: 1.25em; display: grid; gap: 12px; }
+.alloc { padding: 12px 0; border-top: 1px solid var(--border); display: grid; gap: 6px; }
+.alloc:first-child { border-top: 0; }
+.alloc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.alloc-title { font-weight: 600; overflow-wrap: anywhere; }
+.alloc-amount { display: grid; text-align: right; }
+.alloc-reason { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.alloc details { font-size: 0.9rem; }
+.alloc summary { cursor: pointer; color: var(--primary); font-weight: 600; }
+.bar-equity { background: var(--accent); }
+.ai-summary { background: var(--primary-soft); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
+.ai-summary .badge { background: var(--surface); margin-right: 6px; }
+.promises { margin: 0 0 12px; padding-left: 1.25em; display: grid; gap: 4px; font-size: 0.9rem; }
+.disclaimer { font-size: 0.8rem; color: var(--muted); margin: 0; border-top: 1px solid var(--border); padding-top: 10px; }
