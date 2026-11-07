@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { daily, expenses, users } from '../api';
 import { useAuth } from '../AuthContext';
 import { Alert, Field, Modal, Money, Spinner } from '../components/ui';
@@ -178,7 +179,7 @@ export default function Today() {
           {noSalary ? (
             <section className="card day-hero">
               <h2>Add your salary to get a daily budget</h2>
-              <p className="muted">We split what is left after EMIs and savings across the days of the month.</p>
+              <p className="muted">We split what is left after EMIs, monthly expenses and savings across the days of the month.</p>
               <div><button className="btn btn-primary" onClick={() => setPlanOpen(true)}>Set salary</button></div>
             </section>
           ) : (
@@ -244,6 +245,10 @@ export default function Today() {
               </div>
               <div className="plan-row"><span>Monthly salary</span><span className="num">{money(s.monthlySalary)}</span></div>
               <div className="plan-row"><span>EMIs</span><span className="num">− {money(s.monthlyEmi)}</span></div>
+              <div className="plan-row">
+                <span>Monthly expenses <Link to="/monthly" className="small">Manage</Link></span>
+                <span className="num">− {money(s.monthlyExpenses)}</span>
+              </div>
               <div className="plan-row"><span>Savings goal</span><span className="num">− {money(s.monthlySavingsGoal)}</span></div>
               <div className="plan-row total"><span>Free to spend this month</span><span className="num">{money(s.spendableThisMonth)}</span></div>
               <div className="plan-row"><span>Spent so far</span><span className="num">{money(s.spentThisMonth)}</span></div>

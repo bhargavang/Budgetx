@@ -7,7 +7,8 @@ import java.util.List;
 /**
  * One day of the salary-based tracker.
  *
- * <p>spendableThisMonth = monthlySalary - monthlyEmi - monthlySavingsGoal (never below zero).
+ * <p>spendableThisMonth = monthlySalary - monthlyEmi - monthlySavingsGoal - monthlyExpenses (never below
+ * zero), where monthlyExpenses is the total of the user's active fixed monthly costs (rent, bills...).
  * dailyBudget spreads that evenly over the month. todaysAllowance re-spreads what is left at the
  * start of the day over the days remaining (this day included), so overspending earlier lowers it
  * and underspending raises it.
@@ -18,6 +19,7 @@ public record DailySummaryResponse(
         BigDecimal monthlyEmi,
         boolean emiAvailable,
         BigDecimal monthlySavingsGoal,
+        BigDecimal monthlyExpenses,
         BigDecimal spendableThisMonth,
         int daysInMonth,
         int daysLeftInMonth,

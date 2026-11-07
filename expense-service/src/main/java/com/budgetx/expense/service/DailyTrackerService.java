@@ -33,6 +33,7 @@ public class DailyTrackerService {
     private final ExpenseRepository expenseRepository;
     private final DayNoteRepository dayNoteRepository;
     private final DailyBudgetSettingsRepository settingsRepository;
+    private final MonthlyExpenseService monthlyExpenseService;
     private final UserClient userClient;
     private final EmiClient emiClient;
     private final Clock clock;
@@ -56,7 +57,9 @@ public class DailyTrackerService {
             emiAvailable = false;
         }
         BigDecimal savingsGoal = savingsGoal(userId);
-        BigDecimal spendable = salary.subtract(emi).subtract(savingsGoal).max(BigDecimal.ZERO);
+        BigDecimal monthlyExpenses = monthlyExpenseService.activeTotal(userId);
+        BigDecimal spendable = salary.subtract(emi).subtract(savingsGoal).subtract(monthlyExpenses)
+                .max(BigDecimal.ZERO);
 
         int daysInMonth = month.lengthOfMonth();
         int daysLeft = daysInMonth - date.getDayOfMonth() + 1;
@@ -75,7 +78,7 @@ public class DailyTrackerService {
 
         String note = dayNoteRepository.findByUserIdAndNoteDate(userId, date).map(DayNote::getNote).orElse(null);
 
-        return new DailySummaryResponse(date, salary, emi, emiAvailable, savingsGoal, spendable,
+        return new DailySummaryResponse(date, salary, emi, emiAvailable, savingsGoal, monthlyExpenses, spendable,
                 daysInMonth, daysLeft, dailyBudget, allowance, spentToday, allowance.subtract(spentToday),
                 spentMonth, spendable.subtract(spentMonth), note, expenses);
     }

@@ -6,10 +6,11 @@ import { PayProvider, usePay } from './PayFlow';
 const NAV = [
   { to: '/', label: 'Home', icon: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', end: true },
   { to: '/today', label: 'Today', icon: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M9 15h2' },
+  { to: '/monthly', label: 'Monthly', icon: 'M20 11a8 8 0 0 0-14.9-4M4 4v3h3M4 13a8 8 0 0 0 14.9 4M20 20v-3h-3M12 8v8M14.5 9.5h-3.25a1.75 1.75 0 0 0 0 3.5h1.5a1.75 1.75 0 0 1 0 3.5H9.5' },
   { to: '/expenses', label: 'Expenses', icon: 'M4 5h16v14H4zM4 9h16M8 14h4' },
   { to: '/emis', label: 'EMIs', icon: 'M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6' },
   { to: '/guidance', label: 'Guidance', icon: 'M4 19V9M10 19V5M16 19v-7M22 19H2' },
-  { to: '/profile', label: 'Profile', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0' },
+  { to: '/profile', label: 'Profile', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', topbar: true },
 ];
 
 function Icon({ d }) {
@@ -43,6 +44,7 @@ export default function Layout() {
 function Shell() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const initial = (user?.fullName || user?.email || '?').charAt(0).toUpperCase();
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -58,7 +60,7 @@ function Shell() {
         <div className="sidebar-foot">
           <ThemePicker />
           <div className="who">
-            <span className="avatar" aria-hidden="true">{(user?.fullName || user?.email || '?').charAt(0).toUpperCase()}</span>
+            <span className="avatar" aria-hidden="true">{initial}</span>
             <span className="muted small who-email">{user?.email}</span>
           </div>
           <button className="btn btn-ghost" onClick={logout}>Sign out</button>
@@ -70,6 +72,9 @@ function Shell() {
         <div className="topbar-actions">
           <PayButton />
           <ThemeToggle />
+          <NavLink to="/profile" className="topbar-avatar" aria-label="Profile" title="Profile">
+            <span className="avatar" aria-hidden="true">{initial}</span>
+          </NavLink>
         </div>
       </header>
 
@@ -81,7 +86,8 @@ function Shell() {
       </main>
 
       <nav className="tabbar">
-        {NAV.map((n) => (
+        {/* Profile sits in the top bar on phones, so the tab bar keeps to six tabs. */}
+        {NAV.filter((n) => !n.topbar).map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className="tab-link">
             <span className="tab-icon"><Icon d={n.icon} /></span>
             <span>{n.label}</span>

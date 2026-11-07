@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.budgetx.expense.service.ExpenseService;
+import com.budgetx.expense.service.MonthlyExpenseService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,9 +18,16 @@ import lombok.RequiredArgsConstructor;
 public class InternalExpenseController {
 
     private final ExpenseService expenseService;
+    private final MonthlyExpenseService monthlyExpenseService;
 
+    /**
+     * Logged expenses for the month plus the user's active fixed monthly expenses (rent, bills...), which
+     * are not logged day by day. Fixed costs are not kept per month, so today's list is used for every
+     * month; month-on-month comparisons stay fair because the same amount is added to both.
+     */
     @GetMapping("/api/expenses/total")
     public BigDecimal total(@RequestParam Long userId, @RequestParam int month, @RequestParam int year) {
-        return expenseService.totalForMonth(userId, YearMonth.of(year, month));
+        return expenseService.totalForMonth(userId, YearMonth.of(year, month))
+                .add(monthlyExpenseService.activeTotal(userId));
     }
 }
