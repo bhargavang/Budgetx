@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Emis from './pages/Emis';
 import Expenses from './pages/Expenses';
 import Today from './pages/Today';
+import Monthly from './pages/Monthly';
 import Profile from './pages/Profile';
 import Guidance from './pages/Guidance';
 
@@ -48,6 +49,7 @@ export default function App() {
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Dashboard />} />
         <Route path="today" element={<Today />} />
+        <Route path="monthly" element={<Monthly />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="emis" element={<Emis />} />
         <Route path="profile" element={<Profile />} />

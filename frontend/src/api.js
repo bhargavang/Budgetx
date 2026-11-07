@@ -174,6 +174,14 @@ export const daily = {
   saveSettings: (monthlySavingsGoal) => api('/expenses/daily/settings', { method: 'PUT', body: { monthlySavingsGoal } }),
 };
 
+export const monthly = {
+  list: () => api('/expenses/monthly'),
+  create: (data) => api('/expenses/monthly', { method: 'POST', body: data }),
+  update: (id, data) => api(`/expenses/monthly/${id}`, { method: 'PUT', body: data }),
+  setActive: (id, active) => api(`/expenses/monthly/${id}/active`, { method: 'PATCH', body: { active } }),
+  remove: (id) => api(`/expenses/monthly/${id}`, { method: 'DELETE' }),
+};
+
 export const guidance = {
   latest: () => api('/recommendations/latest'),
   generate: () => api('/recommendations/generate', { method: 'POST' }),

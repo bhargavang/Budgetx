@@ -41,15 +41,12 @@ function seed() {
     if (iso(date) > todayIso() || (!allowToday && iso(date) === todayIso())) return;
     expenses.push({ expenseId: id++, categoryId, amount, description, expenseDate: iso(date), paymentMethod, note });
   };
-  // the last 12 months: rent, bills and a handful of everyday spends
+  // the last 12 months of everyday spends (rent and bills live in monthly expenses instead)
   for (let back = 11; back >= 0; back--) {
     const y = now.getFullYear();
     const m = now.getMonth() - back;
     const d = (day) => new Date(y, m, Math.min(day, daysIn(new Date(y, m, 1).getFullYear(), new Date(y, m, 1).getMonth() + 1)));
     const k = (back * 37) % 11;
-    add(d(1), 1, 14000, 'House rent', 'NET_BANKING');
-    add(d(3), 8, 299, 'Jio recharge');
-    add(d(5), 3, 1450 + k * 40, 'Electricity bill', 'UPI');
     add(d(6), 2, 2100 + k * 90, 'BigBasket order');
     add(d(9), 9, 640 + k * 30, 'Swiggy dinner');
     add(d(12), 4, 500, 'Metro card top-up');
@@ -58,7 +55,7 @@ function seed() {
     add(d(20), 10, 499, 'Movie tickets');
     add(d(23), 9, 420 + k * 25, 'Lunch with team');
     add(d(26), 4, 350 + k * 20, 'Ola rides');
-    add(d(28), 13, 600, 'Haircut and gym');
+    add(d(28), 13, 400, 'Haircut');
   }
   // a little more detail this week so the Today tab has something to show
   const day = (n) => new Date(now.getFullYear(), now.getMonth(), now.getDate() - n);
@@ -83,10 +80,25 @@ function seed() {
     ],
     nextEmiId: 3,
     savingsGoal: 10000,
+    monthly: seedMonthly(),
+    nextMonthlyId: 8,
     notes: {},
     safety: null,
     guidance: null,
   };
+}
+
+function seedMonthly() {
+  return [
+    [1, 'Flat rent', 14000, 'RENT', 1, 'Pay Mr. Rao by UPI, he sends the receipt on WhatsApp'],
+    [2, 'Maid', 3000, 'HOUSEHOLD_HELP', 1, null],
+    [3, 'Jio fiber + mobile', 1299, 'PHONE_INTERNET', 3, null],
+    [4, 'Electricity', 1600, 'UTILITIES', 8, 'Roughly this; more in summer with the AC'],
+    [5, 'Send home', 5000, 'FAMILY_SUPPORT', 10, 'For Amma and Appa'],
+    [6, 'Netflix', 199, 'SUBSCRIPTION', 18, 'Mobile plan, renews automatically'],
+    [7, 'Gym membership', 1500, 'OTHER', 5, 'Paused while travelling for work', false],
+  ].map(([monthlyExpenseId, name, amount, type, dueDay, note, active = true]) =>
+    ({ monthlyExpenseId, name, amount, type, dueDay, note, active }));
 }
 
 let db = null;
@@ -94,6 +106,7 @@ function load() {
   if (db) return db;
   try { db = JSON.parse(localStorage.getItem(KEY)); } catch { db = null; }
   if (!db) { db = seed(); save(); }
+  if (!db.monthly) { db.monthly = []; db.nextMonthlyId = 1; } // demo data saved before monthly expenses existed
   return db;
 }
 function save() {
@@ -123,6 +136,9 @@ function emiView(e, asOf = todayIso()) {
 const activeEmis = () => load().emis.map((e) => emiView(e)).filter((e) => e.status === 'ACTIVE' && e.instalmentsRemaining > 0);
 const monthlyEmi = () => round2(activeEmis().reduce((s, e) => s + e.emiAmount, 0));
 const inRange = (from, to) => load().expenses.filter((e) => e.expenseDate >= from && e.expenseDate <= to);
+const monthlyTotal = () => round2(load().monthly.filter((x) => x.active).reduce((s, x) => s + x.amount, 0));
+const monthlyOrder = (a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1)
+  || (a.dueDay ?? 99) - (b.dueDay ?? 99) || b.amount - a.amount;
 const monthRange = (y, m) => [`${y}-${pad(m)}-01`, `${y}-${pad(m)}-${pad(daysIn(y, m))}`];
 
 function monthSummary(month, year) {
@@ -149,7 +165,8 @@ function dailySummary(date) {
   const daysLeft = dim - day.getDate() + 1;
   const salary = Number(d.user.monthlySalary || 0);
   const emi = monthlyEmi();
-  const spendable = Math.max(0, salary - emi - d.savingsGoal);
+  const fixed = monthlyTotal();
+  const spendable = Math.max(0, salary - emi - d.savingsGoal - fixed);
   const [from, to] = monthRange(y, m);
   const before = inRange(from, date).filter((e) => e.expenseDate < date).reduce((s, e) => s + e.amount, 0);
   const allowance = down2(Math.max(0, spendable - before) / daysLeft);
@@ -158,7 +175,7 @@ function dailySummary(date) {
   const spentMonth = round2(inRange(from, to).reduce((s, e) => s + e.amount, 0));
   return {
     date, monthlySalary: salary, monthlyEmi: emi, emiAvailable: true, monthlySavingsGoal: d.savingsGoal,
-    spendableThisMonth: spendable, daysInMonth: dim, daysLeftInMonth: daysLeft, dailyBudget: down2(spendable / dim),
+    monthlyExpenses: fixed, spendableThisMonth: spendable, daysInMonth: dim, daysLeftInMonth: daysLeft, dailyBudget: down2(spendable / dim),
     todaysAllowance: allowance, spentToday, remainingToday: round2(allowance - spentToday), spentThisMonth: spentMonth,
     remainingThisMonth: round2(spendable - spentMonth), dayNote: d.notes[date] || null, expenses: todays,
   };
@@ -172,7 +189,7 @@ function makeGuidance() {
   const emi = monthlyEmi();
   const ms = monthSummary(now.getMonth() + 1, now.getFullYear());
   const past = [1, 2, 3].map((k) => { const t = new Date(now.getFullYear(), now.getMonth() - k, 1); return monthSummary(t.getMonth() + 1, t.getFullYear()).total; });
-  const spending = round2(Math.max(ms.total, past.reduce((a, b) => a + b, 0) / 3));
+  const spending = round2(Math.max(ms.total, past.reduce((a, b) => a + b, 0) / 3) + monthlyTotal());
   const disposable = round2(salary - emi - spending);
   const s = d.safety;
   const monthlyNeed = spending + emi;
@@ -319,6 +336,39 @@ function route(method, path, q, body) {
   if (path === '/expenses/daily/settings') {
     if (method === 'PUT') { d.savingsGoal = Math.max(0, Number(body?.monthlySavingsGoal || 0)); save(); }
     return ok({ monthlySavingsGoal: d.savingsGoal });
+  }
+
+  if (path === '/expenses/monthly' && method === 'GET') {
+    const items = [...d.monthly].sort(monthlyOrder);
+    return ok({ monthlyTotal: monthlyTotal(), activeCount: items.filter((x) => x.active).length, items });
+  }
+  const monthlyBody = (b, cur = {}) => {
+    const bad = required(b, ['name', 'amount']);
+    if (bad) return { bad };
+    return { item: { ...cur, name: String(b.name).trim(), amount: round2(Number(b.amount)), type: b.type || 'OTHER',
+      dueDay: b.dueDay ? Number(b.dueDay) : null, note: b.note ? String(b.note).trim().slice(0, 500) : null,
+      active: b.active === undefined || b.active === null ? (cur.active ?? true) : !!b.active } };
+  };
+  if (path === '/expenses/monthly' && method === 'POST') {
+    const { bad, item } = monthlyBody(body);
+    if (bad) return bad;
+    item.monthlyExpenseId = d.nextMonthlyId++;
+    d.monthly.push(item);
+    save();
+    return ok(item, 201);
+  }
+  if ((m = path.match(/^\/expenses\/monthly\/(\d+)(\/active)?$/))) {
+    const i = d.monthly.findIndex((x) => x.monthlyExpenseId === Number(m[1]));
+    if (i < 0) return err(404, 'Monthly expense not found');
+    if (m[2] && method === 'PATCH') { d.monthly[i].active = !!body?.active; save(); return ok(d.monthly[i]); }
+    if (method === 'DELETE') { d.monthly.splice(i, 1); save(); return ok(null, 204); }
+    if (method === 'PUT') {
+      const { bad, item } = monthlyBody(body, d.monthly[i]);
+      if (bad) return bad;
+      d.monthly[i] = item;
+      save();
+      return ok(item);
+    }
   }
 
   if (path === '/emis' && method === 'GET') {
