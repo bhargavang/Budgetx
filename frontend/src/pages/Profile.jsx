@@ -3,6 +3,7 @@ import { users } from '../api';
 import { useAuth } from '../AuthContext';
 import { Alert, Field } from '../components/ui';
 import { label } from '../format';
+import { ThemePicker } from '../theme';
 
 const GENDERS = ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'];
 const RISKS = ['CONSERVATIVE', 'MODERATE', 'AGGRESSIVE'];
@@ -130,6 +131,13 @@ export default function Profile() {
         <button className="btn btn-ghost" onClick={logout}>Sign out</button>
       </div>
       <div className="stack">
+        <section className="card appearance">
+          <div>
+            <h2>Appearance</h2>
+            <p className="muted small">Auto follows your phone or computer setting.</p>
+          </div>
+          <ThemePicker />
+        </section>
         <Details />
         <Password />
       </div>

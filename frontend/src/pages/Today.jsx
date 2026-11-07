@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { daily, expenses, users } from '../api';
 import { useAuth } from '../AuthContext';
-import { Alert, Field, Modal, Spinner } from '../components/ui';
+import { Alert, Field, Modal, Money, Spinner } from '../components/ui';
 import { date as fmtDate, label, money, today } from '../format';
 import { ExpenseForm } from './Expenses';
 
@@ -179,7 +179,7 @@ export default function Today() {
             <section className="card day-hero">
               <span className="hero-label">{isToday ? 'Left to spend today' : `Left to spend on ${fmtDate(day)}`}</span>
               <span className={`hero-value ${remaining < 0 ? 'bad' : 'good'}`}>
-                {remaining < 0 ? `−${money(-remaining)}` : money(remaining)}
+                <Money value={remaining} signed />
               </span>
               <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}
                 aria-label="Share of the day's allowance spent">

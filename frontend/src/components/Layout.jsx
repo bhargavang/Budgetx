@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { ThemePicker, ThemeToggle } from '../theme';
 
 const NAV = [
   { to: '/', label: 'Home', icon: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', end: true },
@@ -21,6 +22,7 @@ function Icon({ d }) {
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -33,23 +35,31 @@ export default function Layout() {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <span className="muted small">{user?.email}</span>
+          <ThemePicker />
+          <div className="who">
+            <span className="avatar" aria-hidden="true">{(user?.fullName || user?.email || '?').charAt(0).toUpperCase()}</span>
+            <span className="muted small who-email">{user?.email}</span>
+          </div>
           <button className="btn btn-ghost" onClick={logout}>Sign out</button>
         </div>
       </aside>
 
       <header className="topbar">
         <div className="brand"><img src="/icon.svg" alt="" width="28" height="28" /> BudgetX</div>
+        <ThemeToggle />
       </header>
 
       <main className="content">
-        <Outlet />
+        {/* Keyed on the path so each page fades in when you switch tabs. */}
+        <div className="page" key={pathname}>
+          <Outlet />
+        </div>
       </main>
 
       <nav className="tabbar">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className="tab-link">
-            <Icon d={n.icon} />
+            <span className="tab-icon"><Icon d={n.icon} /></span>
             <span>{n.label}</span>
           </NavLink>
         ))}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { ThemeToggle } from '../theme';
 import { Alert, Field } from '../components/ui';
 import { label } from '../format';
 
@@ -37,6 +38,7 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="auth-theme" />
       <form className="card auth-card wide" onSubmit={submit}>
         <div className="auth-brand"><img src="/icon.svg" alt="" width="48" height="48" /><h1>Create account</h1></div>
         <p className="muted center">Your salary and risk profile shape your budget and advice.</p>
